@@ -83,7 +83,7 @@ type commandMetadataView struct {
 
 	// CSC and routing derive separate decisions from the shared records.
 	cscTable     map[string]cscCommandMeta
-	routingTable map[string]routingCommandMeta
+	routingTable map[string]*routingCommandMeta
 
 	// cscFingerprint identifies the eligibility decisions. It is part of
 	// every cache-entry key — never of the Redis-key invalidation index — so
@@ -286,7 +286,7 @@ func buildCommandMetadataViewForServerWithLegacy(
 			shadowedParents[parent] = struct{}{}
 		}
 	}
-	return &commandMetadataView{
+	view := &commandMetadataView{
 		generation:        commandMetadataGeneration.Add(1),
 		records:           records,
 		tombstones:        tombstones,
@@ -297,6 +297,8 @@ func buildCommandMetadataViewForServerWithLegacy(
 		cscFingerprint:    cscTableFingerprint(table),
 		serverVersion:     serverVersion,
 	}
+	linkRoutingTemplates(view)
+	return view
 }
 
 func commandMetadataAllowsBareInvocation(info *CommandInfo) bool {
